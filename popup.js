@@ -82,6 +82,10 @@ document.addEventListener('DOMContentLoaded', () => {
       recordButton.textContent = 'Stop Recording';
       recordButton.style.backgroundColor = '#dc3545';
       recordButton.disabled = false;
+      // Add these lines to start the timer
+      startTime = Date.now();
+      recordingTimer = setInterval(updateTimer, 1000);
+      updateTimer(); // Initial update
     } else if (message.status === 'stopped') {
       isRecording = false;
       clearInterval(recordingTimer);
