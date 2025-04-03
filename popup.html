@@ -61,11 +61,7 @@
       color: #666;
     }
     .button-group {
-      display: flex;
-      gap: 10px;
-    }
-    .button-group button {
-      flex: 1;
+      display: block; /* Changed from flex since we only have one button */
     }
   </style>
 </head>
@@ -73,19 +69,12 @@
   <div class="section">
     <div class="button-group">
       <button id="recordButton">Start Recording</button>
-      <button id="downloadButton" disabled>Download</button>
     </div>
     <div id="status">Ready to record</div>
   </div>
 
   <div class="section preferences">
     <h3 style="margin-top: 0">Preferences</h3>
-    <label>
-      <input type="checkbox" id="autoSave"> Auto-save recordings
-    </label>
-    <label>
-      <input type="text" id="savePrefix" placeholder="File name prefix">
-    </label>
     <label>
       Format: 
       <select id="format">

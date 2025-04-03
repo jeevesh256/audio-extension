@@ -1,9 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const recordButton = document.getElementById('recordButton');
-  const downloadButton = document.getElementById('downloadButton');
   const status = document.getElementById('status');
-  const autoSaveCheckbox = document.getElementById('autoSave');
-  const savePrefixInput = document.getElementById('savePrefix');
   const formatSelect = document.getElementById('format');
   const saveModal = document.getElementById('saveModal');
   const saveButton = document.getElementById('saveButton');
@@ -23,26 +20,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load preferences
   chrome.storage.sync.get({
-    autoSave: false,
-    savePrefix: 'recording_',
     format: 'webm'
   }, (items) => {
-    autoSaveCheckbox.checked = items.autoSave;
-    savePrefixInput.value = items.savePrefix;
     formatSelect.value = items.format;
   });
 
   // Save preferences
   function savePreferences() {
     chrome.storage.sync.set({
-      autoSave: autoSaveCheckbox.checked,
-      savePrefix: savePrefixInput.value,
       format: formatSelect.value
     });
   }
 
-  autoSaveCheckbox.addEventListener('change', savePreferences);
-  savePrefixInput.addEventListener('change', savePreferences);
   formatSelect.addEventListener('change', savePreferences);
 
   function showSaveDialog() {
@@ -72,23 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  downloadButton.addEventListener('click', () => {
-    if (audioUrl) {
-      chrome.downloads.download({
-        url: audioUrl,
-        filename: `recording_${new Date().toISOString()}.webm`
-      });
-    }
-  });
-
   saveButton.addEventListener('click', () => {
     if (audioUrl) {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const prefix = savePrefixInput.value || 'recording_';
       const format = formatSelect.value;
       chrome.downloads.download({
         url: audioUrl,
-        filename: `${prefix}${timestamp}.${format}`
+        filename: `recording_${timestamp}.${format}`
       });
     }
     hideSaveDialog();
@@ -103,7 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
       recordButton.textContent = 'Stop Recording';
       recordButton.style.backgroundColor = '#dc3545';
       recordButton.disabled = false;
-      downloadButton.disabled = true;
     } else if (message.status === 'stopped') {
       isRecording = false;
       clearInterval(recordingTimer);
@@ -111,14 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
       recordButton.textContent = 'Start Recording';
       recordButton.style.backgroundColor = '#4285f4';
       recordButton.disabled = false;
-      downloadButton.disabled = false;
       status.textContent = 'Recording completed';
-      
-      if (autoSaveCheckbox.checked) {
-        saveButton.click();
-      } else {
-        showSaveDialog();
-      }
+      showSaveDialog();
     } else if (message.status === 'error') {
       isRecording = false;
       clearInterval(recordingTimer);
@@ -126,7 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
       recordButton.textContent = 'Start Recording';
       recordButton.style.backgroundColor = '#4285f4';
       recordButton.disabled = false;
-      downloadButton.disabled = true;
     }
   });
 
@@ -136,7 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
       isRecording = true;
       recordButton.textContent = 'Stop Recording';
       recordButton.style.backgroundColor = '#dc3545';
-      downloadButton.disabled = true;
       // Use the background script's start time
       startTime = response.startTime;
       recordingTimer = setInterval(updateTimer, 1000);
