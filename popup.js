@@ -59,8 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Requesting recording start...');
         recordButton.disabled = true;
         status.textContent = 'Starting recording...';
-        startTime = Date.now();
-        recordingTimer = setInterval(updateTimer, 1000);
         chrome.runtime.sendMessage({ action: 'startRecording' });
       } catch (err) {
         console.error('Recording error:', err);
@@ -129,6 +127,21 @@ document.addEventListener('DOMContentLoaded', () => {
       recordButton.style.backgroundColor = '#4285f4';
       recordButton.disabled = false;
       downloadButton.disabled = true;
+    }
+  });
+
+  // Check recording state when popup opens
+  chrome.runtime.sendMessage({ action: 'getState' }, (response) => {
+    if (response.isRecording) {
+      isRecording = true;
+      recordButton.textContent = 'Stop Recording';
+      recordButton.style.backgroundColor = '#dc3545';
+      downloadButton.disabled = true;
+      // Use the background script's start time
+      startTime = response.startTime;
+      recordingTimer = setInterval(updateTimer, 1000);
+      updateTimer(); // Update immediately
+      status.textContent = 'Recording...';
     }
   });
 });

@@ -2,18 +2,29 @@ let mediaRecorder = null;
 let audioChunks = [];
 let recordingStream = null;
 let audioContext = null;
+let isRecording = false;
+let recordingStartTime = null;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'startRecording') {
-    startRecording();
+    if (!isRecording) {
+      startRecording();
+    }
   } else if (message.action === 'stopRecording') {
     stopRecording();
+  } else if (message.action === 'getState') {
+    sendResponse({
+      isRecording: isRecording,
+      startTime: recordingStartTime,
+      error: null
+    });
   }
   return true;
 });
 
 function startRecording() {
   console.log('Starting recording...');
+  recordingStartTime = Date.now();
   
   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     if (!tabs || tabs.length === 0) {
@@ -49,6 +60,7 @@ function startRecording() {
       recordingStream = stream;
       mediaRecorder = new MediaRecorder(stream);
       audioChunks = [];
+      isRecording = true;
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -57,6 +69,8 @@ function startRecording() {
       };
 
       mediaRecorder.onstop = () => {
+        isRecording = false;
+        recordingStartTime = null;
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
         const url = URL.createObjectURL(audioBlob);
         chrome.runtime.sendMessage({ 
@@ -74,6 +88,8 @@ function startRecording() {
 }
 
 function stopRecording() {
+  isRecording = false;
+  recordingStartTime = null;
   if (mediaRecorder && mediaRecorder.state !== 'inactive') {
     mediaRecorder.stop();
   }
