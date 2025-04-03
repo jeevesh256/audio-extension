@@ -53,44 +53,35 @@ function startRecording() {
       // Create audio context and connect stream to speakers
       audioContext = new AudioContext();
       const source = audioContext.createMediaStreamSource(stream);
-      const destination = audioContext.createMediaStreamDestination();
       source.connect(audioContext.destination); // Route to speakers
-      source.connect(destination); // Route to recording
 
       recordingStream = stream;
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks = [];
-      isRecording = true;
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunks.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        isRecording = false;
-        recordingStartTime = null;
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        const url = URL.createObjectURL(audioBlob);
+      
+      // Initialize WAV recorder instead of MediaRecorder
+      mediaRecorder = new WavRecorder(stream, (blob) => {
+        const url = URL.createObjectURL(blob);
         chrome.runtime.sendMessage({ 
           status: 'stopped',
           audioUrl: url
         });
         cleanup();
-      };
+      });
+      
+      audioChunks = [];
+      isRecording = true;
 
-      mediaRecorder.start(100);
-      console.log('MediaRecorder started');
+      mediaRecorder.start();
+      console.log('WAV Recorder started');
       chrome.runtime.sendMessage({ status: 'recording' });
     });
   });
 }
 
 function stopRecording() {
-  isRecording = false;
-  recordingStartTime = null;
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    console.log('Stopping recording...');
+    isRecording = false;
+    recordingStartTime = null;
     mediaRecorder.stop();
   }
 }
